@@ -39,7 +39,9 @@ func (b *Broker) Publish(topicName string, message string) {
 	topic, exists := b.Topics[topicName]
 	b.mu.RUnlock()
 
-	if exists {
-		topic.Publish(message)
+	if !exists {
+		return
 	}
+
+	topic.Publish(message)
 }

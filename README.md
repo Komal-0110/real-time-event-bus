@@ -44,6 +44,9 @@ cd event-bus
 go mod tidy
 
 **Run Backend** : go run cmd/server/main.go
+
+---
+
 **Run Frontend** :
 cd ui/streaming-app
 npm install

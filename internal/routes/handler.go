@@ -52,9 +52,11 @@ func (h *Handler) SubscribeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	topic := r.URL.Query().Get("topic")
+	group := r.URL.Query().Get("group")
 
 	subscriber := pubsub.Subscriber{
 		ID:      conn.LocalAddr().String(),
+		Group:   group,
 		Channel: make(chan models.Message, 10),
 	}
 

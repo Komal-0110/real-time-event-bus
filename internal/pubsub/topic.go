@@ -6,37 +6,64 @@ import (
 )
 
 type Topic struct {
-	Name        string
-	Subscribers map[string]Subscriber
-	mu          sync.RWMutex
+	Name   string
+	Groups map[string][]Subscriber
+	Index  map[string]int
+	mu     sync.RWMutex
 }
 
 func NewTopic(name string) *Topic {
 	return &Topic{
-		Name:        name,
-		Subscribers: make(map[string]Subscriber),
+		Name:   name,
+		Groups: make(map[string][]Subscriber),
+		Index:  make(map[string]int),
 	}
 }
 
 func (t *Topic) AddSubscriber(subscriber Subscriber) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	t.Subscribers[subscriber.ID] = subscriber
+	t.Groups[subscriber.Group] = append(t.Groups[subscriber.Group], subscriber)
 }
 
 func (t *Topic) RemoveSubscriber(subscriberID string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	delete(t.Subscribers, subscriberID)
+
+	for group, subscribers := range t.Groups {
+		for i, subscriber := range subscribers {
+			if subscriber.ID == subscriberID {
+				t.Groups[group] = append(subscribers[:i], subscribers[i+1:]...)
+				break
+			}
+		}
+	}
 }
 
 func (t *Topic) Publish(message string) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	for _, subscriber := range t.Subscribers {
-		subscriber.Channel <- models.Message{
+
+	for group, subscribers := range t.Groups {
+		if len(subscribers) == 0 {
+			continue
+		}
+
+		idx := t.Index[group] % len(subscribers)
+		subscriber := subscribers[idx]
+
+		msg := models.Message{
 			Topic:   t.Name,
 			Message: message,
 		}
+
+		select {
+		case subscriber.Channel <- msg:
+		default:
+			println("Subscriber slow, skipping:", subscriber.ID)
+
+		}
+
+		t.Index[group] = (t.Index[group] + 1) % len(subscribers)
 	}
 }
