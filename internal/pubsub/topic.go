@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"event-bus/internal/models"
+	"log"
 	"sync"
 )
 
@@ -9,7 +10,8 @@ type Topic struct {
 	Name   string
 	Groups map[string][]Subscriber
 	Index  map[string]int
-	mu     sync.RWMutex
+
+	mu sync.RWMutex
 }
 
 func NewTopic(name string) *Topic {
@@ -49,7 +51,7 @@ func (t *Topic) RemoveSubscriber(subscriberID string) {
 	}
 }
 
-func (t *Topic) Publish(message string) {
+func (t *Topic) Publish(payload string, msg models.Message) (Subscriber, bool) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -61,18 +63,15 @@ func (t *Topic) Publish(message string) {
 		idx := t.Index[group] % len(subscribers)
 		subscriber := subscribers[idx]
 
-		msg := models.Message{
-			Topic:   t.Name,
-			Message: message,
-		}
-
 		select {
 		case subscriber.Channel <- msg:
+			t.Index[group] = (t.Index[group] + 1) % len(subscribers)
+			return subscriber, true
 		default:
-			println("Subscriber slow, skipping:", subscriber.ID)
+			log.Println("Subscriber channel full:", subscriber.ID)
 
 		}
-
-		t.Index[group] = (t.Index[group] + 1) % len(subscribers)
 	}
+
+	return Subscriber{}, false
 }

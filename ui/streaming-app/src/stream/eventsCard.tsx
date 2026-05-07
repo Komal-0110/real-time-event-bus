@@ -3,8 +3,10 @@ import { Radio, Users } from "lucide-react";
 import { FunctionComponent, useEffect, useState } from "react";
 
 interface Message {
-  Topic: string;
-  Message: string;
+  id: string;
+  topic: string;
+  payload: string;
+  timestamp: string;
 }
 
 export interface EventCardProps {
@@ -30,6 +32,12 @@ const EventCard: FunctionComponent<EventCardProps> = ({ topic, group }) => {
       try {
         const msg: Message = JSON.parse(event.data);
         setMessages((prev) => [...prev, msg]);
+        websocket.send(
+          JSON.stringify({
+            type: "ack",
+            message_id: msg.id,
+          }),
+        );
       } catch (error) {
         console.error("Error parsing message:", error);
       }
@@ -111,7 +119,7 @@ const EventCard: FunctionComponent<EventCardProps> = ({ topic, group }) => {
                     </span>
                   </div>
                   <p className="text-sm text-slate-600 leading-relaxed break-words font-medium">
-                    {msg.Message}
+                    {msg.payload}
                   </p>
                 </div>
               ))}

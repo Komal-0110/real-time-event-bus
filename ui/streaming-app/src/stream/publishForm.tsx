@@ -6,22 +6,22 @@ import { FunctionComponent, useState } from "react";
 
 export interface PublishFormProps {
   topic: string;
-  onPublish: (topic: string, message: string) => void;
+  onPublish: (topic: string, payload: string) => void;
 }
 
 const PublishForm: FunctionComponent<PublishFormProps> = ({
   topic,
   onPublish,
 }) => {
-  const [message, setMessage] = useState("");
+  const [payload, setPayload] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
   const handlePublish = async () => {
-    if (message.trim()) {
+    if (payload.trim()) {
       setIsPublishing(true);
       try {
-        await onPublish(topic, message);
-        setMessage("");
+        await onPublish(topic, payload);
+        setPayload("");
       } finally {
         setIsPublishing(false);
       }
@@ -56,8 +56,8 @@ const PublishForm: FunctionComponent<PublishFormProps> = ({
           <Textarea
             placeholder="Enter JSON or plain text..."
             className="min-h-[120px] resize-none bg-white border-slate-200 focus:ring-purple-500 p-4 leading-relaxed transition-all"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            value={payload}
+            onChange={(e) => setPayload(e.target.value)}
           />
         </div>
 
@@ -68,7 +68,7 @@ const PublishForm: FunctionComponent<PublishFormProps> = ({
               ? "bg-slate-100 text-slate-400"
               : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
           }`}
-          disabled={!topic || !message.trim() || isPublishing}
+          disabled={!topic || !payload.trim() || isPublishing}
         >
           {isPublishing ? (
             <div className="flex items-center gap-2">

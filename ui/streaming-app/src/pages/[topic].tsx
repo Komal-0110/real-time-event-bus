@@ -19,7 +19,7 @@ const TopicPage: React.FC = () => {
     return <div className="p-4">Invalid topic or groups</div>;
   }
 
-  const handlePublish = async (topic: string, message: string) => {
+  const handlePublish = async (topic: string, payload: string) => {
     try {
       const response = await fetch(`http://127.0.0.1:8080/publish`, {
         method: "POST",
@@ -27,8 +27,8 @@ const TopicPage: React.FC = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          Topic: topic,
-          Message: message,
+          topic: topic,
+          payload: payload,
         }),
       });
 

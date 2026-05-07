@@ -23,7 +23,7 @@ func NewHandler(broker *pubsub.Broker) *Handler {
 func (h *Handler) PublishHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Topic   string `json:"topic"`
-		Message string `json:"message"`
+		Payload string `json:"payload"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -31,7 +31,7 @@ func (h *Handler) PublishHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.broker.Publish(req.Topic, req.Message)
+	h.broker.Publish(req.Topic, req.Payload)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -43,6 +43,11 @@ var upgrader = websocket.Upgrader{
 
 type Client struct {
 	Conn *websocket.Conn
+}
+
+type AckMessage struct {
+	Type      string `json:"type"`
+	MessageID string `json:"message_id"`
 }
 
 func (h *Handler) SubscribeHandler(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +70,7 @@ func (h *Handler) SubscribeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
-		client.readPump()
+		client.readPump(h.broker, subscriber)
 		h.broker.Unsubscribe(topic, subscriber.ID)
 	}()
 	go client.writePump(subscriber.Channel)
@@ -74,7 +79,7 @@ func (h *Handler) SubscribeHandler(w http.ResponseWriter, r *http.Request) {
 	h.broker.Subscribe(topic, subscriber)
 }
 
-func (c *Client) readPump() {
+func (c *Client) readPump(b *pubsub.Broker, subscriber pubsub.Subscriber) {
 	defer c.Conn.Close()
 
 	for {
@@ -84,6 +89,16 @@ func (c *Client) readPump() {
 				log.Printf("error: %v", err)
 			}
 			break
+		}
+
+		var ack AckMessage
+
+		if err := json.Unmarshal(msg, &ack); err != nil {
+			continue
+		}
+
+		if ack.Type == "ack" {
+			b.Ack(ack.MessageID, subscriber.ID)
 		}
 
 		log.Println("Received from client:", string(msg))
