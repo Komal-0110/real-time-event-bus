@@ -23,6 +23,15 @@ func NewTopic(name string) *Topic {
 func (t *Topic) AddSubscriber(subscriber Subscriber) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+
+	if t.Groups == nil {
+		t.Groups = make(map[string][]Subscriber)
+	}
+
+	if t.Index == nil {
+		t.Index = make(map[string]int)
+	}
+
 	t.Groups[subscriber.Group] = append(t.Groups[subscriber.Group], subscriber)
 }
 

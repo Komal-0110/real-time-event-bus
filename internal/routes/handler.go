@@ -55,7 +55,7 @@ func (h *Handler) SubscribeHandler(w http.ResponseWriter, r *http.Request) {
 	group := r.URL.Query().Get("group")
 
 	subscriber := pubsub.Subscriber{
-		ID:      conn.LocalAddr().String(),
+		ID:      conn.RemoteAddr().String(),
 		Group:   group,
 		Channel: make(chan models.Message, 10),
 	}
@@ -64,7 +64,10 @@ func (h *Handler) SubscribeHandler(w http.ResponseWriter, r *http.Request) {
 		Conn: conn,
 	}
 
-	go client.readPump()
+	go func() {
+		client.readPump()
+		h.broker.Unsubscribe(topic, subscriber.ID)
+	}()
 	go client.writePump(subscriber.Channel)
 
 	h.broker.CreateTopic(topic)
@@ -77,7 +80,9 @@ func (c *Client) readPump() {
 	for {
 		_, msg, err := c.Conn.ReadMessage()
 		if err != nil {
-			log.Println("Error reading message:", err)
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
+			}
 			break
 		}
 

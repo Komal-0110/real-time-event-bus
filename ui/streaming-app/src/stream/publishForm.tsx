@@ -1,34 +1,26 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, SendHorizontal, Tag } from "lucide-react";
 import { FunctionComponent, useState } from "react";
 
 export interface PublishFormProps {
-  topics: string[];
+  topic: string;
   onPublish: (topic: string, message: string) => void;
 }
 
 const PublishForm: FunctionComponent<PublishFormProps> = ({
-  topics,
+  topic,
   onPublish,
 }) => {
-  const [selectedTopic, setSelectedTopic] = useState<string>("");
   const [message, setMessage] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
   const handlePublish = async () => {
-    if (selectedTopic && message.trim()) {
+    if (message.trim()) {
       setIsPublishing(true);
       try {
-        await onPublish(selectedTopic, message);
+        await onPublish(topic, message);
         setMessage("");
       } finally {
         setIsPublishing(false);
@@ -44,8 +36,8 @@ const PublishForm: FunctionComponent<PublishFormProps> = ({
             <SendHorizontal className="w-5 h-5 text-purple-600" />
           </div>
           <div>
-            <CardTitle className="text-xl font-bold text-slate-800">
-              Publish Event
+            <CardTitle className="text-l font-bold text-slate-800">
+              Publish Event To {topic}
             </CardTitle>
             <p className="text-xs text-muted-foreground">
               Broadcast a message to your subscribers
@@ -55,30 +47,6 @@ const PublishForm: FunctionComponent<PublishFormProps> = ({
       </CardHeader>
 
       <CardContent className="space-y-5">
-        {/* Topic Selection */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 ml-1">
-            <Tag className="w-4 h-4" />
-            <label>Destination Topic</label>
-          </div>
-          <Select onValueChange={setSelectedTopic} value={selectedTopic}>
-            <SelectTrigger className="w-full bg-white border-slate-200 focus:ring-purple-500 h-11 transition-all">
-              <SelectValue placeholder="Where should this go?" />
-            </SelectTrigger>
-            <SelectContent>
-              {topics.map((t, idx) => (
-                <SelectItem
-                  key={idx}
-                  value={t}
-                  className="focus:bg-purple-50 focus:text-purple-700"
-                >
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Message Input */}
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 ml-1">
@@ -100,7 +68,7 @@ const PublishForm: FunctionComponent<PublishFormProps> = ({
               ? "bg-slate-100 text-slate-400"
               : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
           }`}
-          disabled={!selectedTopic || !message.trim() || isPublishing}
+          disabled={!topic || !message.trim() || isPublishing}
         >
           {isPublishing ? (
             <div className="flex items-center gap-2">

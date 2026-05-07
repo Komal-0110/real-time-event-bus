@@ -20,7 +20,11 @@ func (b *Broker) CreateTopic(name string) {
 	defer b.mu.Unlock()
 
 	if _, exists := b.Topics[name]; !exists {
-		b.Topics[name] = NewTopic(name)
+		b.Topics[name] = &Topic{
+			Name:   name,
+			Groups: make(map[string][]Subscriber),
+			Index:  make(map[string]int),
+		}
 	}
 }
 
@@ -31,6 +35,16 @@ func (b *Broker) Subscribe(topicName string, subscriber Subscriber) {
 
 	if exists {
 		topic.AddSubscriber(subscriber)
+	}
+}
+
+func (b *Broker) Unsubscribe(topicName string, subscriberID string) {
+	b.mu.RLock()
+	topic, exists := b.Topics[topicName]
+	b.mu.RUnlock()
+
+	if exists {
+		topic.RemoveSubscriber(subscriberID)
 	}
 }
 

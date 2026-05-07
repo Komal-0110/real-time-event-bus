@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Topic } from "@/pages";
 import {
   Check,
   ChevronRight,
@@ -12,10 +13,10 @@ import {
 import { FunctionComponent, useState } from "react";
 
 export interface TopicListProps {
-  topics: string[];
-  activeTopic: string;
-  onSelect: (topic: string) => void;
-  onDelete: (topic: string) => void;
+  topics: Topic[];
+  activeTopic: Topic | undefined;
+  onSelect: (topic: Topic) => void;
+  onDelete: (topic: Topic) => void;
   onUpdate: (oldName: string, newName: string) => void;
 }
 
@@ -60,12 +61,12 @@ const TopicList: FunctionComponent<TopicListProps> = ({
       <CardContent className="flex-1 overflow-y-auto p-2">
         <ul className="space-y-1">
           {topics.map((topic) => {
-            const isActive = topic === activeTopic;
-            const isEditing = editingTopic === topic;
+            const isActive = topic.name === activeTopic?.name;
+            const isEditing = editingTopic === topic.name;
 
             return (
               <li
-                key={topic}
+                key={topic.name}
                 className={`group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200 cursor-pointer
                   ${isActive ? "bg-blue-600 text-white shadow-md" : "text-slate-600 hover:bg-slate-100"}`}
                 onClick={() => !isEditing && onSelect(topic)}
@@ -94,11 +95,11 @@ const TopicList: FunctionComponent<TopicListProps> = ({
                 ) : (
                   <>
                     <span className="truncate max-w-[120px] font-medium">
-                      {topic}
+                      {topic.name}
                     </span>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
-                        onClick={(e) => startEditing(e, topic)}
+                        onClick={(e) => startEditing(e, topic.name)}
                         className={`p-1 rounded hover:bg-white/20 ${isActive ? "text-white" : "text-slate-400 hover:text-blue-500"}`}
                       >
                         <Pencil className="w-3.5 h-3.5" />
